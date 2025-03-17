@@ -1,26 +1,41 @@
 import { useState } from 'react';
-import { Image, Money, Link } from '@shopify/hydrogen';
+import { Image, Money } from '@shopify/hydrogen';
+import { Link } from '@remix-run/react';
 
-export function ProductCard({ product }) {
-  const [selectedVariant, setSelectedVariant] = useState(null);
+export function ProductCard({ product, loading }) {
+  const [selectedVariant, setSelectedVariant] = useState(product.variants.edges[0].node);
+  const [hoverImage, setHoverImage] = useState(null);
+  console.log(selectedVariant)
 
   // Check if onSale
   const isOnSale = selectedVariant.compareAtPriceV2 &&
     parseFloat(selectedVariant.compareAtPriceV2.amount) > parseFloat(selectedVariant.priceV2.amount);
 
-  return (
-    <div className="relative border">
-      {/* Product Badge (On Sale) */}
-      <span className="absolute top-2 left-2 text-red text-sm font-bold px-2 py-1 rounded">On Sale!</span>
+  // Get the variant image or fallback
+  const variantImage = selectedVariant.image || product.featuredImage;
 
+  // Handle variant selection
+  const handleVariantChange = (variant) => {
+    setSelectedVariant(variant);
+    setHoverImage(null); // Reset hover image when changing variant
+  };
+
+  return (
+    <div className="relative border p-4">
+      {/* Product Badge (On Sale) */}
+      {isOnSale && (
+        <span className="absolute top-4 left-4 text-base text-red-600 font-medium px-2 py-1 border rounded-3xl z-10">On Sale!</span>
+      )}
 
       {/* Product Image */}
       <Link to={`/products/${product.handle}`}>
-        <div className="relative w-full h-64 mb-4 overflow-hidden rounded">
+        <div className="relative w-full h-64 mb-4 overflow-hidden rounded border-solid border border-gray-200"
+          onMouseEnter={() => setHoverImage(selectedVariant.image || product.images.edges[1]?.node)}
+          onMouseLeave={() => setHoverImage(null)}>
           <Image
             alt={product.title}
-            data={product.images[0]}
-            loading="lazy"
+            data={hoverImage || variantImage}
+            loading={loading}
             aspectRatio="1/1"
             className="object-cover w-full h-full"
           />
@@ -28,37 +43,50 @@ export function ProductCard({ product }) {
       </Link>
 
       {/* Variant Swatches (Colors) */}
-      <div className="mt-4 flex justify-center gap-2">
-        {/* products.variants (map through them, and render swatch button) */}
+      <div className="my-3 flex justify-left gap-2">
+        {product.variants.edges.map(({ node: variant }) => {
+          const colorOption = variant.selectedOptions.find(option => option.name.toLowerCase() === 'color');
+          if (!colorOption) return null;
+
+          return (
+            <button
+              key={variant.id}
+              onClick={() => handleVariantChange(variant)}
+              className={`w-6 h-6 rounded-full border-2 cursor-pointer ${selectedVariant.id === variant.id ? 'border-black' : 'border-gray-300'
+                }`}
+              style={{ backgroundColor: colorOption.value.toLowerCase() }}
+              title={colorOption.value}
+            />
+          );
+        })}
       </div>
 
       {/* Product Details */}
-      <div className="product-details text-center">
+      <div className="product-details text-left">
 
         {/* Brand Name */}
-        <p className="text-sm text-black">{product.vendor}</p>
+        <p className="text-sm text-black font-normal">{product.vendor}</p>
 
         {/* Product Title */}
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-base font-medium">
           <Link to={`/products/${product.handle}`}>
             {product.title}
           </Link>
         </h3>
 
         {/* Product Price */}
-        <div className="mt-2">
+        <div className="mt-1 flex items-center">
           <Money
             data={selectedVariant.priceV2}
-            className={`text-lg font-bold ${isOnSale ? 'line-through' : ''}`}
+            className={`text-sm font-normal ${isOnSale ? 'line-through' : ''}`}
           />
           {isOnSale && (
             <Money
               data={selectedVariant.compareAtPriceV2}
-              className="text-sm text-red-500 ml-2"
+              className="text-sm font-normal text-red-500 ml-2"
             />
           )}
         </div>
-
       </div>
     </div>
   );

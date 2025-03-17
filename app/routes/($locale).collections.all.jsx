@@ -3,6 +3,8 @@ import {getPaginationVariables, Image, Money} from '@shopify/hydrogen';
 import {useVariantUrl} from '~/lib/variants';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 
+import { ProductCard } from "~/components/ProductCard";
+
 /**
  * @type {MetaFunction<typeof loader>}
  */
@@ -65,7 +67,7 @@ export default function Collection() {
         resourcesClassName="products-grid"
       >
         {({node: product, index}) => (
-          <ProductItem
+          <ProductCard
             key={product.id}
             product={product}
             loading={index < 8 ? 'eager' : undefined}
@@ -117,12 +119,44 @@ const PRODUCT_ITEM_FRAGMENT = `#graphql
     id
     handle
     title
+    vendor
     featuredImage {
       id
       altText
       url
       width
       height
+    }
+    images(first: 2) {
+      edges {
+        node {
+          url
+          altText
+        }
+      }
+    }
+    variants(first: 10) {
+      edges {
+        node {
+          id
+          priceV2 {
+            amount
+            currencyCode
+          }
+          compareAtPriceV2 {
+            amount
+            currencyCode
+          }
+          image {
+            url
+            altText
+          }
+          selectedOptions {
+            name
+            value
+          }
+        }
+      }
     }
     priceRange {
       minVariantPrice {
