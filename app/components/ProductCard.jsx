@@ -30,7 +30,7 @@ export function ProductCard({ product, loading }) {
       {/* Product Image */}
       <Link to={`/products/${product.handle}`}>
         <div className="relative w-full h-64 mb-4 overflow-hidden rounded border-solid border border-gray-200"
-          onMouseEnter={() => setHoverImage(selectedVariant.image || product.images.edges[1]?.node)}
+          onMouseEnter={() => setHoverImage(product.images.edges[1]?.node || selectedVariant.image)}
           onMouseLeave={() => setHoverImage(null)}>
           <Image
             alt={product.title}
